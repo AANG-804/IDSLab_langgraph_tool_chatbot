@@ -47,7 +47,6 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-data/
 vector_db/
 templates/
 __pycache__/
