@@ -69,8 +69,11 @@ def get_database_schema() -> str:
     """
 
 
-db = Chroma(persist_directory="vector_db")
-retriever = db.as_retriever(k=1)
+from langchain_openai import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+db = Chroma(persist_directory="vector_db", embedding_function=embeddings)
+retriever = db.as_retriever(k=2)
 
 
 # Retriever를 Tool로 변환
@@ -101,7 +104,7 @@ def get_available_tools():
 
 # 기본 설정
 DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_TEMPERATURE = 0.4
+DEFAULT_TEMPERATURE = 0.7
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant that can use tools to answer questions. if you can't answer the question with the tools, you can answer it with your knowledge."
 
 
