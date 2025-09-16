@@ -1,5 +1,5 @@
 """
-LangGraph를 사용한 도구 기반 챗봇 구현
+LangGraph를 사용한 도구 기반 챗봇 구현하기
 """
 
 from typing import Annotated, List, Optional, Any
