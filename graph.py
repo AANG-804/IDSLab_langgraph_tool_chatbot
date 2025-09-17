@@ -17,7 +17,16 @@ from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_chroma import Chroma
 from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
+ # ---- SQL tools (manual) to avoid deprecated LLMChain dependency ----
+try:
+    from langchain_community.tools.sql_database.tool import (
+        QuerySQLDataBaseTool,
+        InfoSQLDatabaseTool,
+        ListSQLDatabaseTool,
+    )
+    _HAS_SQL_TOOLS = True
+except Exception:
+    _HAS_SQL_TOOLS = False
 
 from langgraph.managed.is_last_step import RemainingSteps
 
@@ -39,10 +48,15 @@ wiki_tool = WikipediaQueryRun(api_wrapper=wiki_api_wrapper)
 
 ## SQL 도구
 db = SQLDatabase.from_uri("sqlite:///stock.db")
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
-llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
-sql_toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+# Create SQL tools directly (avoid QuerySQLCheckerTool which imports deprecated LLMChain)
+if _HAS_SQL_TOOLS:
+    sql_query_tool = QuerySQLDataBaseTool(db=db)
+    sql_info_tool = InfoSQLDatabaseTool(db=db)
+    sql_list_tables_tool = ListSQLDatabaseTool(db=db)
+else:
+    sql_query_tool = None
+    sql_info_tool = None
+    sql_list_tables_tool = None
 
 from langchain.tools import tool
 
@@ -91,8 +105,9 @@ def vector_db_retriever(query: str) -> str:
 
 
 # 기본 도구들 (벡터 DB 제외)
-BASE_TOOLS = [wiki_tool, get_database_schema, vector_db_retriever
-              ] + sql_toolkit.get_tools()
+BASE_TOOLS = [wiki_tool, get_database_schema, vector_db_retriever] + [
+    t for t in [sql_query_tool, sql_info_tool, sql_list_tables_tool] if t is not None
+]
 
 
 def get_available_tools():
@@ -161,8 +176,7 @@ def build_graph(model: str = DEFAULT_MODEL,
     builder.add_conditional_edges("chatbot", tools_condition)
     builder.add_edge("tools", "chatbot")
 
-    checkpointer = InMemorySaver()
-    return builder.compile(checkpointer=checkpointer)
+    return builder.compile()
 
 
 # 기본 그래프 생성 (지연 실행)

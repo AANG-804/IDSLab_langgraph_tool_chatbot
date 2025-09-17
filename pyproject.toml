@@ -12,6 +12,7 @@ dependencies = [
     "langchain-community>=0.3.0",
     "langchain-openai>=0.3.28",
     "langgraph>=0.6.0",
+    "langgraph-api>=0.4.20",
     "langgraph-checkpoint>=2.1.1",
     "openai>=1.97.1",
     "pypdf>=5.9.0",
